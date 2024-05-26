@@ -31,6 +31,10 @@ run = True
 finish = False
 text_pos = [100, 100]
 text = "Congratulations!"
+anim_time = time.time()
+bomb_size = 10
+bomb_put_time = 0
+bomb_pos = [-1,-1]
 
 #블록 생성
 block = []
@@ -44,15 +48,23 @@ block[0][0] = 0
 block[-1][-1] = 0
 
 def destroy_block(pos, block) :
+    global bomb_pos
     dirs = [[0,1], [1,0], [0,-1], [-1,0]]
     for dir in dirs :
         try:
-            x = max(0, pos[0]+dir[0]) #좌표 보정
-            y = max(0, pos[1]+dir[1]) #좌표 보정
+            x = max(0, pos[0]+dir[0])
+            y = max(0, pos[1]+dir[1])
             block[x][y] = 0
+            bomb_pos = [-1,-1]
         except:
             pass
-    
+
+def put_bomb(pos) :
+    global bomb_pos
+    global bomb_put_time
+    if bomb_pos[0] == -1 :
+        bomb_pos = pos
+        bomb_put_time = time.time()
 
 #게임 루프
 while run :
@@ -74,10 +86,13 @@ while run :
                 if pos[0]+1 < 20 and block[pos[0]+1][pos[1]] != 1 :
                     pos = [pos[0]+1, pos[1]]
             elif event.key == pygame.K_d :
-                destroy_block(pos, block);
+                #destroy_block(pos, block);
+                put_bomb(pos)
                 
     if pos[0] == 19 and pos[1] == 19 :
         finish = True
+
+    cur_time = time.time()
     
     #화면 초기화
     GameDisplay.fill(WHITE)
@@ -87,6 +102,7 @@ while run :
     #맵 그리기
     for i in range(5, 510,25):
         pygame.draw.line(GameDisplay, BLACK, [5,i], [505,i], 2)
+    for i in range(5, 510,25):
         pygame.draw.line(GameDisplay, BLACK, [i,5], [i,505], 2)
 
     #블록 그리기
@@ -94,15 +110,32 @@ while run :
         for j in range(20):
             if block[i][j] == 1 :
                 pygame.draw.circle(GameDisplay, BLACK, [start+j*distance, start+i*distance], 10)
+
+    #폭탄 그리기
+    if finish == False and bomb_pos[0] > -1 :
+        if cur_time - bomb_put_time > 2.5 :
+            destroy_block(bomb_pos, block)
+        elif cur_time - bomb_put_time > 2 :
+            pygame.draw.rect(GameDisplay, RED, [start+bomb_pos[1]*distance, start/2+bomb_pos[0]*distance, 35, 20])
+        else :
+            if cur_time - anim_time > 0.5 :
+                if bomb_size == 10 :
+                    bomb_size = 11
+                else :
+                    bomb_size = 10
+                anim_time = time.time()
+        pygame.draw.circle(GameDisplay, RED, [start+bomb_pos[1]*distance, start+bomb_pos[0]*distance], bomb_size)
+        
+    if finish :
+        pygame.draw.rect(GameDisplay, WHITE, [text_pos[0], text_pos[1], 290, 40])
+        game_text = font.render(text, True, RED)
+        GameDisplay.blit(game_text, text_pos)
             
 
     #사용자 그리기
     pygame.draw.circle(GameDisplay, BLUE, [start+pos[1]*distance, start+pos[0]*distance], 10)
 
-    if finish :
-        pygame.draw.rect(GameDisplay, WHITE, [text_pos[0], text_pos[1], 290, 40])
-        game_text = font.render(text, True, RED)
-        GameDisplay.blit(game_text, text_pos)
+    
         
     pygame.display.update()
     FramePerSec.tick(FPS)
