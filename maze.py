@@ -47,8 +47,8 @@ def destroy_block(pos, block) :
     dirs = [[0,1], [1,0], [0,-1], [-1,0]]
     for dir in dirs :
         try:
-            x = max(0, pos[0]+dir[0])
-            y = max(0, pos[1]+dir[1])
+            x = max(0, pos[0]+dir[0]) #좌표 보정
+            y = max(0, pos[1]+dir[1]) #좌표 보정
             block[x][y] = 0
         except:
             pass
